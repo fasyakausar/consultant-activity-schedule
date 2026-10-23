@@ -82,6 +82,8 @@ tr.st.booked .tg.ro{background:rgba(255,255,255,.25)}
  tr.st td,tr.st.booked td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
  .s-progress,.s-cancel,.s-akan,.s-soon,.s-booked,.s-done,.bar,.chip i{-webkit-print-color-adjust:exact;print-color-adjust:exact}
  tr.st select{appearance:none;border:none;background:none;padding:0}
+ .gt,.today{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .g{min-width:0}
  .col-act{display:none}
  .pane{display:none}.pane.show{display:block}
 }
@@ -144,6 +146,7 @@ tr.st.booked .tg.ro{background:rgba(255,255,255,.25)}
   <div class="card noprint" style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
     <button id="gp" aria-label="Bulan sebelumnya">‹</button><b id="gl" style="min-width:140px;text-align:center"></b><button id="gn" aria-label="Bulan berikutnya">›</button>
     <span class="muted">Mengikuti filter konsultan, status, dan klien di tab Jadwal.</span>
+    <span style="margin-left:auto;display:flex;gap:8px"><button class="primary" id="gpdf">Cetak / simpan PDF</button><button id="gxls">Ekspor Excel</button></span>
   </div>
   <div class="chips" id="chips2"></div>
   <div class="card"><div class="tw"><div class="g" id="gantt"></div></div></div>
@@ -257,11 +260,17 @@ function meta(){
   p.push('Dicetak: '+fmt(new Date().toISOString().slice(0,10)));return p.join('  |  ');
 }
 
+function metaG(){
+  const [y,m]=gm.split('-').map(Number),c=$('xc').value;
+  const p=[`Bulan: ${MN[m-1]} ${y}`,`Konsultan: ${c?cname(c):'Semua'}`];
+  if($('xs').value)p.push('Status: '+ST[$('xs').value]);if($('xk').value)p.push('Klien: '+$('xk').value);
+  p.push('Dicetak: '+fmt(new Date().toISOString().slice(0,10)));return p.join('  |  ');
+}
 function render(){
   fillSelects();
   const list=filtered();
   $('chips').innerHTML=chipsHtml(list);$('chips2').innerHTML=chipsHtml(list);
-  $('phmeta').textContent=meta();$('phmeta2').textContent=meta();
+  $('phmeta').textContent=meta();
   $('rows').innerHTML=list.map(a=>`<tr class="st s-${a.status} ${a.status}">
     <td>${(a.consultants||[]).map(id=>`<span class="tg ro">${esc(cname(id))}</span>`).join(' ')}</td>
     <td><b>${esc(title(a))}</b>${a.note?`<div style="font-size:12px;opacity:.8">${esc(a.note)}</div>`:''}</td>
@@ -279,6 +288,7 @@ function renderGantt(){
   const [y,m]=gm.split('-').map(Number);const dim=new Date(y,m,0).getDate();
   const m0=Date.UTC(y,m-1,1),m1=Date.UTC(y,m-1,dim);
   $('gl').textContent=`${MN[m-1]} ${y}`;
+  $('phmeta2').textContent=metaG();
   const col={progress:'#FFB800',cancel:'#BFBFBF',akan:'#00B0F0',soon:'#FFFF00',booked:'#FF0000',done:'#92D050'};
   const list=filtered().filter(a=>ms(a.start)<=m1&&ms(a.end)>=m0);
   const grid=`background-image:linear-gradient(to right,var(--line) 1px,transparent 1px);background-size:calc(100%/${dim}) 100%`;
@@ -319,6 +329,53 @@ $('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileRe
     S=Object.assign({cons:[],acts:[]},d);mig();save();render();toast('Data diimpor')}catch(x){toast('File tidak valid')}};
   r.readAsText(f);e.target.value=''};
 $('print').onclick=()=>window.print();
+$('gpdf').onclick=()=>{const t=document.title,[y,m]=gm.split('-').map(Number);
+  document.title=`Timeline ${MN[m-1]} ${y}`;window.print();document.title=t};
+function loadX(){return new Promise((ok,no)=>{if(window.ExcelJS)return ok();const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
+$('gxls').onclick=async()=>{
+  try{await loadX()}catch(e){toast('Gagal memuat pustaka Excel. Periksa koneksi internet.');return}
+  const [y,m]=gm.split('-').map(Number),dim=new Date(y,m,0).getDate();
+  const m0=Date.UTC(y,m-1,1),m1=Date.UTC(y,m-1,dim);
+  const list=filtered().filter(a=>ms(a.start)<=m1&&ms(a.end)>=m0);
+  const COL={progress:'FFFFB800',cancel:'FFBFBFBF',akan:'FF00B0F0',soon:'FFFFFF00',booked:'FFFF0000',done:'FF92D050'};
+  const fill=c=>({type:'pattern',pattern:'solid',fgColor:{argb:c}});
+  const bd={top:{style:'thin',color:{argb:'FFBBBBBB'}},left:{style:'thin',color:{argb:'FFBBBBBB'}},bottom:{style:'thin',color:{argb:'FFBBBBBB'}},right:{style:'thin',color:{argb:'FFBBBBBB'}}};
+  const NF=6,wb=new ExcelJS.Workbook();
+  const ws=wb.addWorksheet(`${MN[m-1]} ${y}`,{views:[{state:'frozen',xSplit:NF,ySplit:5}]});
+  ws.getCell(1,1).value=`TIMELINE AKTIVITAS KONSULTAN - ${MN[m-1].toUpperCase()} ${y}`;ws.getCell(1,1).font={bold:true,size:14};
+  ws.getCell(2,1).value=metaG();ws.getCell(2,1).font={color:{argb:'FF666666'}};
+  const WD=['Mg','Sn','Sl','Rb','Km','Jm','Sb'];
+  for(let d=1;d<=dim;d++){
+    const w=new Date(Date.UTC(y,m-1,d)).getUTCDay();
+    const a=ws.getCell(4,NF+d),b=ws.getCell(5,NF+d);
+    a.value=WD[w];b.value=d;
+    [a,b].forEach(c=>{c.alignment={horizontal:'center'};c.font={bold:true,size:9};c.fill=fill(w===0||w===6?'FFD9D9D9':'FFF2F2F2');c.border=bd});
+  }
+  ['Aktivitas','Konsultan','Mulai','Selesai','Hari kerja','Status'].forEach((h,i)=>{
+    const c=ws.getCell(5,i+1);c.value=h;c.font={bold:true};c.fill=fill('FFF2F2F2');c.border=bd});
+  list.forEach((a,i)=>{
+    const r=6+i;
+    [title(a),names(a),fmt(a.start),fmt(a.end),days(a),ST[a.status]].forEach((v,k)=>{
+      const c=ws.getCell(r,k+1);c.value=v;c.border=bd;c.alignment={vertical:'middle',wrapText:k<2};
+      if(k===5){c.fill=fill(COL[a.status]);c.font={bold:true,color:{argb:a.status==='booked'?'FFFFFFFF':'FF111111'}}}});
+    for(let d=1;d<=dim;d++){
+      const t=Date.UTC(y,m-1,d),w=new Date(t).getUTCDay(),c=ws.getCell(r,NF+d);c.border=bd;
+      if(t>=ms(a.start)&&t<=ms(a.end))c.fill=fill(COL[a.status]);
+      else if(w===0||w===6)c.fill=fill('FFEDEDED');
+    }
+  });
+  if(!list.length)ws.getCell(6,1).value='Tidak ada aktivitas pada bulan ini.';
+  const lr=6+list.length+1;
+  ws.getCell(lr,1).value='Keterangan:';ws.getCell(lr,1).font={bold:true};
+  Object.entries(ST).forEach(([k,v],i)=>{const c=ws.getCell(lr+1+i,1);c.value=v;c.fill=fill(COL[k]);c.border=bd;
+    if(k==='booked')c.font={color:{argb:'FFFFFFFF'}}});
+  ws.getColumn(1).width=46;ws.getColumn(2).width=24;ws.getColumn(3).width=11;ws.getColumn(4).width=11;ws.getColumn(5).width=10;ws.getColumn(6).width=20;
+  for(let d=1;d<=dim;d++)ws.getColumn(NF+d).width=4.2;
+  ws.pageSetup={orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0};
+  const buf=await wb.xlsx.writeBuffer();
+  dl(`timeline-${y}-${String(m).padStart(2,'0')}.xlsx`,buf,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('File Excel diunduh')};
 
 $('theme').onclick=()=>{const de=document.documentElement;const dark=de.dataset.theme==='dark'||(!de.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches);
   S.theme=dark?'light':'dark';de.dataset.theme=S.theme;document.body.classList.toggle('dk',!dark);save()};
