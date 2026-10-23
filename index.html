@@ -121,7 +121,7 @@ tr.st select{background:rgba(255,255,255,.55);color:#111;padding:3px 5px;font-si
   <div class="ph"><h1>Laporan Aktivitas Konsultan</h1><div class="muted" id="phmeta"></div></div>
   <div class="chips" id="chips"></div>
   <div class="card"><div class="tw"><table>
-    <thead><tr><th>Konsultan</th><th>Aktivitas</th><th>Mulai</th><th>Selesai</th><th>Hari</th><th>Status</th><th class="col-act noprint"></th></tr></thead>
+    <thead><tr><th>Konsultan</th><th>Aktivitas</th><th>Mulai</th><th>Selesai</th><th>Hari kerja</th><th>Status</th><th class="col-act noprint"></th></tr></thead>
     <tbody id="rows"></tbody></table></div>
     <div class="foot noprint" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
       <button class="primary" id="print">Cetak / simpan PDF</button><button id="csv">Ekspor CSV</button><button id="exj">Cadangan JSON</button><button id="imp">Impor JSON</button><input type="file" id="file" accept=".json" hidden>
@@ -164,7 +164,7 @@ function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');cle
 const ms=d=>{const [y,m,x]=d.split('-').map(Number);return Date.UTC(y,m-1,x)};
 const DAY=864e5;
 const fmt=d=>d?d.split('-').reverse().join('/'):'';
-const days=a=>Math.round((ms(a.end)-ms(a.start))/DAY)+1;
+const days=a=>{let n=0;for(let t=ms(a.start);t<=ms(a.end);t+=DAY){const w=new Date(t).getUTCDay();if(w>0&&w<6)n++}return n};
 const cname=id=>(S.cons.find(c=>c.id===id)||{name:'(dihapus)'}).name;
 const title=a=>[a.client,a.project,a.activity].filter(Boolean).join(' - ');
 const MN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -283,7 +283,7 @@ function renderMaster(){
 // export / import / print
 function dl(name,text,mime){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:mime}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 $('csv').onclick=()=>{const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
-  const rows=['Konsultan,Klien,Proyek,Aktivitas,Mulai,Selesai,Hari,Status,Catatan',...filtered().map(a=>[q(cname(a.consultant)),q(a.client),q(a.project),q(a.activity),a.start,a.end,days(a),q(ST[a.status]),q(a.note)].join(','))];
+  const rows=['Konsultan,Klien,Proyek,Aktivitas,Mulai,Selesai,Hari kerja,Status,Catatan',...filtered().map(a=>[q(cname(a.consultant)),q(a.client),q(a.project),q(a.activity),a.start,a.end,days(a),q(ST[a.status]),q(a.note)].join(','))];
   dl('laporan-aktivitas.csv','\ufeff'+rows.join('\n'),'text/csv')};
 $('exj').onclick=()=>dl(`jadwal-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(S,null,1),'application/json');
 $('imp').onclick=()=>$('file').click();
