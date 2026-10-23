@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jadwal Aktivitas Konsultan</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f1f4f3;--card:#fff;--ink:#14201f;--mute:#5d6b69;--line:#dde4e2;--acc:#2b4c7e;--r:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1514;--card:#182120;--ink:#e8efed;--mute:#97a6a3;--line:#2a3735;--acc:#8fb2e8}}
+:root[data-theme=dark]{--bg:#0f1514;--card:#182120;--ink:#e8efed;--mute:#97a6a3;--line:#2a3735;--acc:#8fb2e8}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);line-height:1.45;font-size:14px}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}
+h1{font-size:21px;margin:0;font-weight:800;letter-spacing:-.02em}
+h2{font-size:15px;margin:0 0 10px;font-weight:700}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:9px;padding:7px 12px}
+button:hover{border-color:var(--acc)}
+button.primary{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:700}
+[data-theme=dark] button.primary,.dk button.primary{color:#0f1514}
+button.ghost{border:none;background:none;padding:3px 7px;color:var(--mute)}
+button.danger{color:#c0412c}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+input,select,textarea{width:100%;padding:8px 9px;border:1px solid var(--line);border-radius:9px;background:var(--bg)}
+label{display:block;font-size:12px;color:var(--mute);margin-bottom:3px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:14px}
+.tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+.tabs button{border:none;border-bottom:3px solid transparent;border-radius:0;background:none;padding:9px 14px;font-weight:700;color:var(--mute)}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--acc)}
+form{display:grid;grid-template-columns:repeat(12,1fr);gap:10px}
+.s2{grid-column:span 2}.s3{grid-column:span 3}.s4{grid-column:span 4}.s6{grid-column:span 6}.s12{grid-column:span 12}
+.filters{display:grid;grid-template-columns:repeat(5,1fr) auto;gap:8px;align-items:end;margin-bottom:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{display:flex;align-items:center;gap:7px;padding:4px 10px;border:1px solid var(--line);border-radius:99px;background:var(--card);font-size:13px}
+.chip i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.chip b{font-weight:800}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th{text-align:left;font-size:12px;color:var(--mute);padding:7px 8px;border-bottom:2px solid var(--line);font-weight:700}
+td{padding:7px 8px;border-bottom:1px solid var(--line)}
+tr.st td{color:#111}
+tr.st td .ghost{color:#222}
+tr.st.booked td{color:#fff}tr.st.booked td .ghost{color:#fff}
+tr.st select{background:rgba(255,255,255,.55);color:#111;padding:3px 5px;font-size:12px;border-color:rgba(0,0,0,.2)}
+.s-progress{background:#FFB800}.s-cancel{background:#BFBFBF}.s-akan{background:#00B0F0}.s-soon{background:#FFFF00}.s-booked{background:#FF0000}.s-done{background:#92D050}
+.muted{color:var(--mute);font-size:13px}
+.empty{padding:26px;text-align:center;color:var(--mute)}
+.cons{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)}
+.g{position:relative;min-width:900px}
+.gh,.gr{display:grid;grid-template-columns:230px 1fr}
+.gh .d{display:flex;font-size:11px;color:var(--mute)}.gh .d span{flex:1;text-align:center}
+.gr{border-top:1px solid var(--line);min-height:34px;align-items:center}
+.gl{padding:4px 8px 4px 0;font-size:12.5px;overflow:hidden}
+.gl b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gt{position:relative;height:34px}
+.bar{position:absolute;top:6px;height:22px;border-radius:5px;font-size:11px;padding:3px 6px;color:#111;overflow:hidden;white-space:nowrap;border:1px solid rgba(0,0,0,.15)}
+.bar.booked{color:#fff}
+.today{position:absolute;top:0;bottom:0;width:2px;background:var(--acc);opacity:.7}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+.ph{display:none}
+.sub{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0 0 12px}
+@media(max-width:860px){form .s2,form .s3,form .s4,form .s6{grid-column:span 6}.filters{grid-template-columns:1fr 1fr}}
+@media print{
+ @page{size:A4 landscape;margin:12mm}
+ body{background:#fff;color:#000;font-size:11px}.wrap{padding:0;max-width:none}
+ header,.tabs,.noprint,form,.card.formcard,.toast,.filters{display:none!important}
+ .ph{display:block;margin-bottom:10px}.ph h1{font-size:18px}
+ .card{border:none;padding:0}.tw{overflow:visible}table{min-width:0}
+ tr.st td,tr.st.booked td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .s-progress,.s-cancel,.s-akan,.s-soon,.s-booked,.s-done,.bar,.chip i{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ tr.st select{appearance:none;border:none;background:none;padding:0}
+ .col-act{display:none}
+ .pane{display:none}.pane.show{display:block}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Jadwal Aktivitas Konsultan</h1>
+  <div class="noprint"><button id="theme" aria-label="Ganti tema">◐</button></div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-p="jadwal" class="on">Jadwal &amp; Laporan</button>
+  <button data-p="timeline">Timeline</button>
+  <button data-p="master">Master Konsultan</button>
+</nav>
+
+<!-- JADWAL -->
+<section class="pane show" id="p-jadwal">
+  <div class="card formcard">
+    <h2 id="ft">Tambah aktivitas</h2>
+    <form id="f">
+      <div class="s3"><label for="fcons">Konsultan</label><select id="fcons" required></select></div>
+      <div class="s3"><label for="fcl">Kode klien</label><input id="fcl" list="dcl" placeholder="CKSM" required autocomplete="off"><datalist id="dcl"></datalist></div>
+      <div class="s3"><label for="fpr">Proyek / aplikasi</label><input id="fpr" list="dpr" placeholder="ABHI" autocomplete="off"><datalist id="dpr"></datalist></div>
+      <div class="s3"><label for="fst">Status</label><select id="fst"></select></div>
+      <div class="s6"><label for="fac">Aktivitas</label><input id="fac" placeholder="Login SPV/SPG" required autocomplete="off"></div>
+      <div class="s3"><label for="fs">Tanggal mulai</label><input type="date" id="fs" required></div>
+      <div class="s3"><label for="fe">Tanggal selesai</label><input type="date" id="fe" required></div>
+      <div class="s9" style="grid-column:span 9"><label for="fn">Catatan (opsional)</label><input id="fn" autocomplete="off"></div>
+      <div class="s3" style="display:flex;gap:8px;align-items:end"><button class="primary" style="flex:1">Simpan</button><button type="button" id="fcancel" hidden>Batal</button></div>
+    </form>
+    <div class="muted" id="nocons" hidden style="margin-top:8px">Belum ada konsultan. Tambahkan dulu di tab Master Konsultan.</div>
+  </div>
+
+  <div class="filters">
+    <div><label for="xc">Konsultan</label><select id="xc"></select></div>
+    <div><label for="xs">Status</label><select id="xs"></select></div>
+    <div><label for="xm">Bulan</label><input type="month" id="xm"></div>
+    <div><label for="xk">Klien</label><select id="xk"></select></div>
+    <div><label for="xq">Cari</label><input id="xq" placeholder="Aktivitas..."></div>
+    <div><button id="xr">Reset</button></div>
+  </div>
+
+  <div class="ph"><h1>Laporan Aktivitas Konsultan</h1><div class="muted" id="phmeta"></div></div>
+  <div class="chips" id="chips"></div>
+  <div class="card"><div class="tw"><table>
+    <thead><tr><th>Konsultan</th><th>Aktivitas</th><th>Mulai</th><th>Selesai</th><th>Hari</th><th>Status</th><th class="col-act noprint"></th></tr></thead>
+    <tbody id="rows"></tbody></table></div>
+    <div class="foot noprint" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      <button class="primary" id="print">Cetak / simpan PDF</button><button id="csv">Ekspor CSV</button><button id="exj">Cadangan JSON</button><button id="imp">Impor JSON</button><input type="file" id="file" accept=".json" hidden>
+    </div>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section class="pane" id="p-timeline">
+  <div class="ph"><h1>Timeline Aktivitas</h1><div class="muted" id="phmeta2"></div></div>
+  <div class="card noprint" style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+    <button id="gp" aria-label="Bulan sebelumnya">‹</button><b id="gl" style="min-width:140px;text-align:center"></b><button id="gn" aria-label="Bulan berikutnya">›</button>
+    <span class="muted">Mengikuti filter konsultan, status, dan klien di tab Jadwal.</span>
+  </div>
+  <div class="chips" id="chips2"></div>
+  <div class="card"><div class="tw"><div class="g" id="gantt"></div></div></div>
+</section>
+
+<!-- MASTER -->
+<section class="pane" id="p-master">
+  <div class="card" style="max-width:560px">
+    <h2>Master konsultan</h2>
+    <form id="cf" style="grid-template-columns:1fr auto"><input id="cname" placeholder="Nama konsultan" required autocomplete="off"><button class="primary">Tambah</button></form>
+    <div id="clist" style="margin-top:8px"></div>
+  </div>
+</section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const ST={progress:'On Progress',cancel:'Belum Jelas / Cancel',akan:'Akan Dikerjakan',soon:'Soon',booked:'Booked',done:'Done'};
+const KEY='jadwal-konsultan-v1';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+let S={cons:[],acts:[],theme:''};
+try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Gagal menyimpan: penyimpanan browser tidak tersedia')}};
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('show'),2200)}
+const ms=d=>{const [y,m,x]=d.split('-').map(Number);return Date.UTC(y,m-1,x)};
+const DAY=864e5;
+const fmt=d=>d?d.split('-').reverse().join('/'):'';
+const days=a=>Math.round((ms(a.end)-ms(a.start))/DAY)+1;
+const cname=id=>(S.cons.find(c=>c.id===id)||{name:'(dihapus)'}).name;
+const title=a=>[a.client,a.project,a.activity].filter(Boolean).join(' - ');
+const MN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+let editId=null,gm=new Date().toISOString().slice(0,7);
+
+// tabs
+$('tabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('show',p.id==='p-'+b.dataset.p));
+  if(b.dataset.p==='timeline'){if($('xm').value)gm=$('xm').value;renderGantt()}};
+
+// selects
+function fillSelects(){
+  const opt=(v,t)=>`<option value="${esc(v)}">${esc(t)}</option>`;
+  const keep=(id,html)=>{const el=$(id),v=el.value;el.innerHTML=html;if([...el.options].some(o=>o.value===v))el.value=v};
+  keep('fcons',S.cons.map(c=>opt(c.id,c.name)).join(''));
+  keep('fst',Object.entries(ST).map(([k,v])=>opt(k,v)).join(''));
+  keep('xc',opt('','Semua konsultan')+S.cons.map(c=>opt(c.id,c.name)).join(''));
+  keep('xs',opt('','Semua status')+Object.entries(ST).map(([k,v])=>opt(k,v)).join(''));
+  const cl=[...new Set(S.acts.map(a=>a.client).filter(Boolean))].sort();
+  keep('xk',opt('','Semua klien')+cl.map(c=>opt(c,c)).join(''));
+  $('dcl').innerHTML=cl.map(c=>`<option value="${esc(c)}">`).join('');
+  $('dpr').innerHTML=[...new Set(S.acts.map(a=>a.project).filter(Boolean))].sort().map(c=>`<option value="${esc(c)}">`).join('');
+  $('nocons').hidden=S.cons.length>0;
+}
+
+// form
+function resetForm(){editId=null;$('f').reset();$('ft').textContent='Tambah aktivitas';$('fcancel').hidden=true;
+  const t=new Date().toISOString().slice(0,10);$('fs').value=t;$('fe').value=t;$('fst').value='akan'}
+$('f').onsubmit=e=>{e.preventDefault();
+  if(!S.cons.length){toast('Tambahkan konsultan dulu di Master Konsultan');return}
+  if($('fe').value<$('fs').value){toast('Tanggal selesai tidak boleh sebelum tanggal mulai');return}
+  const rec={consultant:$('fcons').value,client:$('fcl').value.trim().toUpperCase(),project:$('fpr').value.trim().toUpperCase(),activity:$('fac').value.trim(),start:$('fs').value,end:$('fe').value,status:$('fst').value,note:$('fn').value.trim()};
+  if(editId){const i=S.acts.findIndex(a=>a.id===editId);S.acts[i]={...S.acts[i],...rec};toast('Perubahan disimpan')}
+  else{S.acts.push({id:uid(),...rec});toast('Aktivitas disimpan')}
+  save();resetForm();render()};
+$('fcancel').onclick=resetForm;
+function edit(id){const a=S.acts.find(x=>x.id===id);if(!a)return;editId=id;
+  $('fcons').value=a.consultant;$('fcl').value=a.client;$('fpr').value=a.project;$('fac').value=a.activity;
+  $('fs').value=a.start;$('fe').value=a.end;$('fst').value=a.status;$('fn').value=a.note||'';
+  $('ft').textContent='Ubah aktivitas';$('fcancel').hidden=false;$('f').scrollIntoView({behavior:'smooth',block:'center'})}
+function del(id){if(!confirm('Hapus aktivitas ini?'))return;S.acts=S.acts.filter(a=>a.id!==id);save();render();toast('Aktivitas dihapus')}
+
+// filters
+['xc','xs','xm','xk'].forEach(i=>$(i).onchange=()=>{if(i==='xm'&&$('xm').value)gm=$('xm').value;render()});
+$('xq').oninput=render;
+$('xr').onclick=()=>{['xc','xs','xm','xk','xq'].forEach(i=>$(i).value='');render()};
+function filtered(){
+  const c=$('xc').value,s=$('xs').value,m=$('xm').value,k=$('xk').value,q=$('xq').value.toLowerCase();
+  return S.acts.filter(a=>(!c||a.consultant===c)&&(!s||a.status===s)&&(!k||a.client===k)
+    &&(!m||(a.start.slice(0,7)<=m&&a.end.slice(0,7)>=m))
+    &&(!q||(title(a)+' '+(a.note||'')).toLowerCase().includes(q)))
+    .sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end));
+}
+function chipsHtml(list){
+  const n={};list.forEach(a=>n[a.status]=(n[a.status]||0)+1);
+  const col={progress:'#FFB800',cancel:'#BFBFBF',akan:'#00B0F0',soon:'#FFFF00',booked:'#FF0000',done:'#92D050'};
+  return `<span class="chip">Total <b>${list.length}</b></span>`+Object.entries(ST).map(([k,v])=>`<span class="chip"><i style="background:${col[k]};border:1px solid rgba(0,0,0,.2)"></i>${v} <b>${n[k]||0}</b></span>`).join('');
+}
+function meta(){
+  const c=$('xc').value,m=$('xm').value;
+  const p=[`Konsultan: ${c?cname(c):'Semua'}`,`Periode: ${m?MN[+m.slice(5)-1]+' '+m.slice(0,4):'Semua'}`];
+  if($('xs').value)p.push('Status: '+ST[$('xs').value]);if($('xk').value)p.push('Klien: '+$('xk').value);
+  p.push('Dicetak: '+fmt(new Date().toISOString().slice(0,10)));return p.join('  |  ');
+}
+
+function render(){
+  fillSelects();
+  const list=filtered();
+  $('chips').innerHTML=chipsHtml(list);$('chips2').innerHTML=chipsHtml(list);
+  $('phmeta').textContent=meta();$('phmeta2').textContent=meta();
+  $('rows').innerHTML=list.map(a=>`<tr class="st s-${a.status} ${a.status}">
+    <td>${esc(cname(a.consultant))}</td>
+    <td><b>${esc(title(a))}</b>${a.note?`<div style="font-size:12px;opacity:.8">${esc(a.note)}</div>`:''}</td>
+    <td>${fmt(a.start)}</td><td>${fmt(a.end)}</td><td>${days(a)}</td>
+    <td><select data-s="${a.id}" aria-label="Status">${Object.entries(ST).map(([k,v])=>`<option value="${k}"${k===a.status?' selected':''}>${v}</option>`).join('')}</select></td>
+    <td class="col-act noprint" style="white-space:nowrap"><button class="ghost" data-e="${a.id}">Ubah</button><button class="ghost" data-d="${a.id}">Hapus</button></td></tr>`).join('')
+    ||`<tr><td colspan="7" class="empty">${S.acts.length?'Tidak ada aktivitas yang cocok dengan filter.':'Belum ada aktivitas. Tambahkan lewat form di atas.'}</td></tr>`;
+  document.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>edit(b.dataset.e));
+  document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>del(b.dataset.d));
+  document.querySelectorAll('[data-s]').forEach(s=>s.onchange=()=>{S.acts.find(a=>a.id===s.dataset.s).status=s.value;save();render();toast('Status diperbarui')});
+  renderMaster();renderGantt();
+}
+
+function renderGantt(){
+  const [y,m]=gm.split('-').map(Number);const dim=new Date(y,m,0).getDate();
+  const m0=Date.UTC(y,m-1,1),m1=Date.UTC(y,m-1,dim);
+  $('gl').textContent=`${MN[m-1]} ${y}`;
+  const col={progress:'#FFB800',cancel:'#BFBFBF',akan:'#00B0F0',soon:'#FFFF00',booked:'#FF0000',done:'#92D050'};
+  const list=filtered().filter(a=>ms(a.start)<=m1&&ms(a.end)>=m0);
+  const grid=`background-image:linear-gradient(to right,var(--line) 1px,transparent 1px);background-size:calc(100%/${dim}) 100%`;
+  const t=new Date(),tp=(t.getFullYear()===y&&t.getMonth()===m-1)?((t.getDate()-.5)/dim*100):null;
+  $('gantt').innerHTML=`<div class="gh"><div></div><div class="d">${Array.from({length:dim},(_,i)=>`<span>${i+1}</span>`).join('')}</div></div>`+
+   (list.map(a=>{const s=Math.max(ms(a.start),m0),e=Math.min(ms(a.end),m1);
+     const l=(s-m0)/DAY/dim*100,w=((e-s)/DAY+1)/dim*100;
+     return `<div class="gr"><div class="gl"><b>${esc(title(a))}</b><span class="muted">${esc(cname(a.consultant))}</span></div>
+     <div class="gt" style="${grid}">${tp!==null?`<div class="today" style="left:${tp}%"></div>`:''}<div class="bar ${a.status}" style="left:${l}%;width:${w}%;background:${col[a.status]}" title="${esc(title(a))} (${fmt(a.start)} - ${fmt(a.end)})">${fmt(a.start).slice(0,5)}–${fmt(a.end).slice(0,5)}</div></div></div>`}).join('')
+   ||'<div class="empty">Tidak ada aktivitas pada bulan ini.</div>');
+}
+$('gp').onclick=()=>{const [y,m]=gm.split('-').map(Number);const d=new Date(y,m-2,1);gm=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');renderGantt()};
+$('gn').onclick=()=>{const [y,m]=gm.split('-').map(Number);const d=new Date(y,m,1);gm=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');renderGantt()};
+
+// master
+$('cf').onsubmit=e=>{e.preventDefault();const n=$('cname').value.trim();if(!n)return;
+  if(S.cons.some(c=>c.name.toLowerCase()===n.toLowerCase())){toast('Nama sudah ada');return}
+  S.cons.push({id:uid(),name:n});$('cname').value='';save();render();toast('Konsultan ditambahkan')};
+function renderMaster(){
+  $('clist').innerHTML=S.cons.map(c=>`<div class="cons"><span><b>${esc(c.name)}</b> <span class="muted">${S.acts.filter(a=>a.consultant===c.id).length} aktivitas</span></span>
+   <span><button class="ghost" data-r="${c.id}">Ganti nama</button><button class="ghost danger" data-x="${c.id}">Hapus</button></span></div>`).join('')||'<div class="empty">Belum ada konsultan.</div>';
+  document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const c=S.cons.find(x=>x.id===b.dataset.r);const n=prompt('Nama baru:',c.name);if(n&&n.trim()){c.name=n.trim();save();render()}});
+  document.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{const id=b.dataset.x;
+    if(S.acts.some(a=>a.consultant===id)){toast('Tidak bisa dihapus: masih punya aktivitas');return}
+    if(confirm('Hapus konsultan ini?')){S.cons=S.cons.filter(c=>c.id!==id);save();render()}});
+}
+
+// export / import / print
+function dl(name,text,mime){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:mime}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+$('csv').onclick=()=>{const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+  const rows=['Konsultan,Klien,Proyek,Aktivitas,Mulai,Selesai,Hari,Status,Catatan',...filtered().map(a=>[q(cname(a.consultant)),q(a.client),q(a.project),q(a.activity),a.start,a.end,days(a),q(ST[a.status]),q(a.note)].join(','))];
+  dl('laporan-aktivitas.csv','\ufeff'+rows.join('\n'),'text/csv')};
+$('exj').onclick=()=>dl(`jadwal-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(S,null,1),'application/json');
+$('imp').onclick=()=>$('file').click();
+$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.acts)||!Array.isArray(d.cons))throw 0;
+    if(!confirm(`Impor ${d.acts.length} aktivitas dan ${d.cons.length} konsultan? Data saat ini akan diganti.`))return;
+    S=Object.assign({cons:[],acts:[]},d);save();render();toast('Data diimpor')}catch(x){toast('File tidak valid')}};
+  r.readAsText(f);e.target.value=''};
+$('print').onclick=()=>window.print();
+
+$('theme').onclick=()=>{const de=document.documentElement;const dark=de.dataset.theme==='dark'||(!de.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches);
+  S.theme=dark?'light':'dark';de.dataset.theme=S.theme;document.body.classList.toggle('dk',!dark);save()};
+if(S.theme){document.documentElement.dataset.theme=S.theme;document.body.classList.toggle('dk',S.theme==='dark')}
+else if(matchMedia('(prefers-color-scheme:dark)').matches)document.body.classList.add('dk');
+
+resetForm();render();
+</script>
+</body>
+</html>
