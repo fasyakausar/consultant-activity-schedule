@@ -45,6 +45,15 @@ tr.st td .ghost{color:#222}
 tr.st.booked td{color:#fff}tr.st.booked td .ghost{color:#fff}
 tr.st select{background:rgba(255,255,255,.55);color:#111;padding:3px 5px;font-size:12px;border-color:rgba(0,0,0,.2)}
 .s-progress{background:#FFB800}.s-cancel{background:#BFBFBF}.s-akan{background:#00B0F0}.s-soon{background:#FFFF00}.s-booked{background:#FF0000}.s-done{background:#92D050}
+.tagbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:5px 7px;border:1px solid var(--line);border-radius:9px;background:var(--bg);min-height:38px}
+.tagbox>span{display:contents}
+.tagbox select{width:auto;flex:1;min-width:160px;border:none;background:none;padding:4px}
+.tg{display:inline-flex;align-items:center;gap:2px;background:var(--acc);color:#fff;border-radius:99px;padding:2px 4px 2px 10px;font-size:12.5px;font-weight:700;white-space:nowrap}
+[data-theme=dark] .tg,.dk .tg{color:#0f1514}
+.tg button{border:none;background:none;color:inherit;padding:0 6px;font-size:15px;line-height:1}
+.tg.ro{padding:2px 9px;margin:1px 2px 1px 0;font-weight:600}
+tr.st .tg.ro{background:rgba(0,0,0,.14);color:inherit}
+tr.st.booked .tg.ro{background:rgba(255,255,255,.25)}
 .muted{color:var(--mute);font-size:13px}
 .empty{padding:26px;text-align:center;color:var(--mute)}
 .cons{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)}
@@ -96,15 +105,15 @@ tr.st select{background:rgba(255,255,255,.55);color:#111;padding:3px 5px;font-si
   <div class="card formcard">
     <h2 id="ft">Tambah aktivitas</h2>
     <form id="f">
-      <div class="s3"><label for="fcons">Konsultan</label><select id="fcons" required></select></div>
+      <div class="s12"><label>Konsultan (boleh lebih dari satu)</label><div class="tagbox"><span id="tbtags"></span><select id="fcons" aria-label="Tambah konsultan"></select></div></div>
       <div class="s3"><label for="fcl">Kode klien</label><input id="fcl" list="dcl" placeholder="CKSM" required autocomplete="off"><datalist id="dcl"></datalist></div>
       <div class="s3"><label for="fpr">Proyek / aplikasi</label><input id="fpr" list="dpr" placeholder="ABHI" autocomplete="off"><datalist id="dpr"></datalist></div>
-      <div class="s3"><label for="fst">Status</label><select id="fst"></select></div>
       <div class="s6"><label for="fac">Aktivitas</label><input id="fac" placeholder="Login SPV/SPG" required autocomplete="off"></div>
       <div class="s3"><label for="fs">Tanggal mulai</label><input type="date" id="fs" required></div>
       <div class="s3"><label for="fe">Tanggal selesai</label><input type="date" id="fe" required></div>
-      <div class="s9" style="grid-column:span 9"><label for="fn">Catatan (opsional)</label><input id="fn" autocomplete="off"></div>
-      <div class="s3" style="display:flex;gap:8px;align-items:end"><button class="primary" style="flex:1">Simpan</button><button type="button" id="fcancel" hidden>Batal</button></div>
+      <div class="s3"><label for="fst">Status</label><select id="fst"></select></div>
+      <div class="s3"><label for="fn">Catatan (opsional)</label><input id="fn" autocomplete="off"></div>
+      <div class="s12" style="display:flex;gap:8px"><button class="primary">Simpan</button><button type="button" id="fcancel" hidden>Batal</button></div>
     </form>
     <div class="muted" id="nocons" hidden style="margin-top:8px">Belum ada konsultan. Tambahkan dulu di tab Master Konsultan.</div>
   </div>
@@ -166,6 +175,21 @@ const DAY=864e5;
 const fmt=d=>d?d.split('-').reverse().join('/'):'';
 const days=a=>{let n=0;for(let t=ms(a.start);t<=ms(a.end);t+=DAY){const w=new Date(t).getUTCDay();if(w>0&&w<6)n++}return n};
 const cname=id=>(S.cons.find(c=>c.id===id)||{name:'(dihapus)'}).name;
+const names=a=>(a.consultants||[]).map(cname).join(', ');
+const has=(a,id)=>(a.consultants||[]).includes(id);
+function mig(){S.acts.forEach(a=>{if(!Array.isArray(a.consultants))a.consultants=a.consultant?[a.consultant]:[]})}
+mig();
+let selCons=[];
+function fillCons(){
+  selCons=selCons.filter(id=>S.cons.some(c=>c.id===id));
+  const rest=S.cons.filter(c=>!selCons.includes(c.id));
+  $('fcons').innerHTML=`<option value="">${rest.length?'+ Tambah konsultan':(S.cons.length?'Semua sudah dipilih':'Belum ada konsultan')}</option>`+rest.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+}
+function renderTags(){
+  fillCons();
+  $('tbtags').innerHTML=selCons.map(id=>`<span class="tg">${esc(cname(id))}<button type="button" data-rm="${esc(id)}" aria-label="Hapus ${esc(cname(id))}">×</button></span>`).join('');
+  document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{selCons=selCons.filter(x=>x!==b.dataset.rm);renderTags()});
+}
 const title=a=>[a.client,a.project,a.activity].filter(Boolean).join(' - ');
 const MN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 let editId=null,gm=new Date().toISOString().slice(0,7);
@@ -180,7 +204,7 @@ $('tabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;
 function fillSelects(){
   const opt=(v,t)=>`<option value="${esc(v)}">${esc(t)}</option>`;
   const keep=(id,html)=>{const el=$(id),v=el.value;el.innerHTML=html;if([...el.options].some(o=>o.value===v))el.value=v};
-  keep('fcons',S.cons.map(c=>opt(c.id,c.name)).join(''));
+  fillCons();
   keep('fst',Object.entries(ST).map(([k,v])=>opt(k,v)).join(''));
   keep('xc',opt('','Semua konsultan')+S.cons.map(c=>opt(c.id,c.name)).join(''));
   keep('xs',opt('','Semua status')+Object.entries(ST).map(([k,v])=>opt(k,v)).join(''));
@@ -192,18 +216,20 @@ function fillSelects(){
 }
 
 // form
-function resetForm(){editId=null;$('f').reset();$('ft').textContent='Tambah aktivitas';$('fcancel').hidden=true;
+function resetForm(){editId=null;$('f').reset();selCons=[];renderTags();$('ft').textContent='Tambah aktivitas';$('fcancel').hidden=true;
   const t=new Date().toISOString().slice(0,10);$('fs').value=t;$('fe').value=t;$('fst').value='akan'}
 $('f').onsubmit=e=>{e.preventDefault();
   if(!S.cons.length){toast('Tambahkan konsultan dulu di Master Konsultan');return}
+  if(!selCons.length){toast('Pilih minimal satu konsultan');return}
   if($('fe').value<$('fs').value){toast('Tanggal selesai tidak boleh sebelum tanggal mulai');return}
-  const rec={consultant:$('fcons').value,client:$('fcl').value.trim().toUpperCase(),project:$('fpr').value.trim().toUpperCase(),activity:$('fac').value.trim(),start:$('fs').value,end:$('fe').value,status:$('fst').value,note:$('fn').value.trim()};
+  const rec={consultants:[...selCons],client:$('fcl').value.trim().toUpperCase(),project:$('fpr').value.trim().toUpperCase(),activity:$('fac').value.trim(),start:$('fs').value,end:$('fe').value,status:$('fst').value,note:$('fn').value.trim()};
   if(editId){const i=S.acts.findIndex(a=>a.id===editId);S.acts[i]={...S.acts[i],...rec};toast('Perubahan disimpan')}
   else{S.acts.push({id:uid(),...rec});toast('Aktivitas disimpan')}
   save();resetForm();render()};
 $('fcancel').onclick=resetForm;
+$('fcons').onchange=()=>{const v=$('fcons').value;if(v&&!selCons.includes(v)){selCons.push(v);renderTags()}};
 function edit(id){const a=S.acts.find(x=>x.id===id);if(!a)return;editId=id;
-  $('fcons').value=a.consultant;$('fcl').value=a.client;$('fpr').value=a.project;$('fac').value=a.activity;
+  selCons=[...(a.consultants||[])];renderTags();$('fcl').value=a.client;$('fpr').value=a.project;$('fac').value=a.activity;
   $('fs').value=a.start;$('fe').value=a.end;$('fst').value=a.status;$('fn').value=a.note||'';
   $('ft').textContent='Ubah aktivitas';$('fcancel').hidden=false;$('f').scrollIntoView({behavior:'smooth',block:'center'})}
 function del(id){if(!confirm('Hapus aktivitas ini?'))return;S.acts=S.acts.filter(a=>a.id!==id);save();render();toast('Aktivitas dihapus')}
@@ -214,7 +240,7 @@ $('xq').oninput=render;
 $('xr').onclick=()=>{['xc','xs','xm','xk','xq'].forEach(i=>$(i).value='');render()};
 function filtered(){
   const c=$('xc').value,s=$('xs').value,m=$('xm').value,k=$('xk').value,q=$('xq').value.toLowerCase();
-  return S.acts.filter(a=>(!c||a.consultant===c)&&(!s||a.status===s)&&(!k||a.client===k)
+  return S.acts.filter(a=>(!c||has(a,c))&&(!s||a.status===s)&&(!k||a.client===k)
     &&(!m||(a.start.slice(0,7)<=m&&a.end.slice(0,7)>=m))
     &&(!q||(title(a)+' '+(a.note||'')).toLowerCase().includes(q)))
     .sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end));
@@ -237,7 +263,7 @@ function render(){
   $('chips').innerHTML=chipsHtml(list);$('chips2').innerHTML=chipsHtml(list);
   $('phmeta').textContent=meta();$('phmeta2').textContent=meta();
   $('rows').innerHTML=list.map(a=>`<tr class="st s-${a.status} ${a.status}">
-    <td>${esc(cname(a.consultant))}</td>
+    <td>${(a.consultants||[]).map(id=>`<span class="tg ro">${esc(cname(id))}</span>`).join(' ')}</td>
     <td><b>${esc(title(a))}</b>${a.note?`<div style="font-size:12px;opacity:.8">${esc(a.note)}</div>`:''}</td>
     <td>${fmt(a.start)}</td><td>${fmt(a.end)}</td><td>${days(a)}</td>
     <td><select data-s="${a.id}" aria-label="Status">${Object.entries(ST).map(([k,v])=>`<option value="${k}"${k===a.status?' selected':''}>${v}</option>`).join('')}</select></td>
@@ -260,7 +286,7 @@ function renderGantt(){
   $('gantt').innerHTML=`<div class="gh"><div></div><div class="d">${Array.from({length:dim},(_,i)=>`<span>${i+1}</span>`).join('')}</div></div>`+
    (list.map(a=>{const s=Math.max(ms(a.start),m0),e=Math.min(ms(a.end),m1);
      const l=(s-m0)/DAY/dim*100,w=((e-s)/DAY+1)/dim*100;
-     return `<div class="gr"><div class="gl"><b>${esc(title(a))}</b><span class="muted">${esc(cname(a.consultant))}</span></div>
+     return `<div class="gr"><div class="gl"><b>${esc(title(a))}</b><span class="muted">${esc(names(a))}</span></div>
      <div class="gt" style="${grid}">${tp!==null?`<div class="today" style="left:${tp}%"></div>`:''}<div class="bar ${a.status}" style="left:${l}%;width:${w}%;background:${col[a.status]}" title="${esc(title(a))} (${fmt(a.start)} - ${fmt(a.end)})">${fmt(a.start).slice(0,5)}–${fmt(a.end).slice(0,5)}</div></div></div>`}).join('')
    ||'<div class="empty">Tidak ada aktivitas pada bulan ini.</div>');
 }
@@ -272,25 +298,25 @@ $('cf').onsubmit=e=>{e.preventDefault();const n=$('cname').value.trim();if(!n)re
   if(S.cons.some(c=>c.name.toLowerCase()===n.toLowerCase())){toast('Nama sudah ada');return}
   S.cons.push({id:uid(),name:n});$('cname').value='';save();render();toast('Konsultan ditambahkan')};
 function renderMaster(){
-  $('clist').innerHTML=S.cons.map(c=>`<div class="cons"><span><b>${esc(c.name)}</b> <span class="muted">${S.acts.filter(a=>a.consultant===c.id).length} aktivitas</span></span>
+  $('clist').innerHTML=S.cons.map(c=>`<div class="cons"><span><b>${esc(c.name)}</b> <span class="muted">${S.acts.filter(a=>has(a,c.id)).length} aktivitas</span></span>
    <span><button class="ghost" data-r="${c.id}">Ganti nama</button><button class="ghost danger" data-x="${c.id}">Hapus</button></span></div>`).join('')||'<div class="empty">Belum ada konsultan.</div>';
   document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const c=S.cons.find(x=>x.id===b.dataset.r);const n=prompt('Nama baru:',c.name);if(n&&n.trim()){c.name=n.trim();save();render()}});
   document.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{const id=b.dataset.x;
-    if(S.acts.some(a=>a.consultant===id)){toast('Tidak bisa dihapus: masih punya aktivitas');return}
+    if(S.acts.some(a=>has(a,id))){toast('Tidak bisa dihapus: masih punya aktivitas');return}
     if(confirm('Hapus konsultan ini?')){S.cons=S.cons.filter(c=>c.id!==id);save();render()}});
 }
 
 // export / import / print
 function dl(name,text,mime){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:mime}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 $('csv').onclick=()=>{const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
-  const rows=['Konsultan,Klien,Proyek,Aktivitas,Mulai,Selesai,Hari kerja,Status,Catatan',...filtered().map(a=>[q(cname(a.consultant)),q(a.client),q(a.project),q(a.activity),a.start,a.end,days(a),q(ST[a.status]),q(a.note)].join(','))];
+  const rows=['Konsultan,Klien,Proyek,Aktivitas,Mulai,Selesai,Hari kerja,Status,Catatan',...filtered().map(a=>[q((a.consultants||[]).map(cname).join('; ')),q(a.client),q(a.project),q(a.activity),a.start,a.end,days(a),q(ST[a.status]),q(a.note)].join(','))];
   dl('laporan-aktivitas.csv','\ufeff'+rows.join('\n'),'text/csv')};
 $('exj').onclick=()=>dl(`jadwal-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(S,null,1),'application/json');
 $('imp').onclick=()=>$('file').click();
 $('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.acts)||!Array.isArray(d.cons))throw 0;
     if(!confirm(`Impor ${d.acts.length} aktivitas dan ${d.cons.length} konsultan? Data saat ini akan diganti.`))return;
-    S=Object.assign({cons:[],acts:[]},d);save();render();toast('Data diimpor')}catch(x){toast('File tidak valid')}};
+    S=Object.assign({cons:[],acts:[]},d);mig();save();render();toast('Data diimpor')}catch(x){toast('File tidak valid')}};
   r.readAsText(f);e.target.value=''};
 $('print').onclick=()=>window.print();
 
